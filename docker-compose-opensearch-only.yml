@@ -22,7 +22,7 @@ services:
       - opensearch-server-1-data:/usr/share/opensearch/data
       - opensearch-server-1-config:/usr/share/opensearch/config
       # The self-signed certificates
-      - ./opensearch_certs/root-ca.pem:/usr/share/opensearch/config/opensearch-server-1-ca.pem
+      - ./opensearch_certs/opensearch-server-1-ca.pem:/usr/share/opensearch/config/opensearch-server-1-ca.pem
       - ./opensearch_certs/opensearch-server-1.pem:/usr/share/opensearch/config/opensearch-server-1.pem
       - ./opensearch_certs/opensearch-server-1-key.pem:/usr/share/opensearch/config/opensearch-server-1-key.pem
     ports:

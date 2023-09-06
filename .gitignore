@@ -1,3 +1,4 @@
 opensearch_certs/
 generate_crt.sh
 opensearch_installation.txt
+.idea/
