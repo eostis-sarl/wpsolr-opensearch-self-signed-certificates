@@ -23,10 +23,13 @@ Generate the certificates using the shell script generate_crt.sh.
 
 or
 
-    mkdir opensearch-certs
-    cd opensearch-certs
+    mkdir opensearch_certs
+    cd opensearch_certs
 
 Generate the Root CA : 
+
+    #openssl genrsa -out opensearch-server-1-ca-key.pem 2048
+    #openssl req -new -x509 -sha256 -key opensearch-server-1-ca-key.pem -subj "/C=AU/ST=Some-State/O=Internet Widgits Pty Ltd/CN=opensearch-server-1" -out opensearch-server-1-ca.pem -days 730
 
     openssl genrsa -out opensearch-server-1-ca-key.pem 2048
     openssl req -new -x509 -sha256 -key opensearch-server-1-ca-key.pem -subj "/C=AU/ST=Some-State/O=Internet Widgits Pty Ltd/CN=opensearch-server-1" -out opensearch-server-1-ca.pem -days 730
@@ -36,7 +39,8 @@ Generate the node certificate.
     openssl genrsa -out opensearch-server-1-key-temp.pem 2048
     openssl pkcs8 -inform PEM -outform PEM -in opensearch-server-1-key-temp.pem -topk8 -nocrypt -v1 PBE-SHA1-3DES -out opensearch-server-1-key.pem
     openssl req -new -key opensearch-server-1-key.pem -subj "/C=AU/ST=Some-State/O=Internet Widgits Pty Ltd/CN=opensearch-server-1" -out opensearch-server-1.csr
-    openssl x509 -req -in opensearch-server-1.csr -CA opensearch-server-1-ca.pem -CAkey opensearch-server-1-ca-key.pem -CAcreateserial -sha256 -out node1.pem -days 730
+    echo "subjectAltName=DNS:opensearch-server-1, DNS:localhost" > opensearch-server-1.ext
+    openssl x509 -req -in opensearch-server-1.csr -CA opensearch-server-1-ca.pem -CAkey opensearch-server-1-ca-key.pem -CAcreateserial -sha256 -out opensearch-server-1.pem -days 730 -extfile opensearch-server-1.ext
 
 Start the Opensearch service
 -----------
