@@ -17,7 +17,7 @@ If you do intend on using the tls to secure your node, do the following.
 Generating the self-signed certificates (optional)
 -----------
 
-Generate the certificates using the shell script generate_crt.sh.
+Generate the certificates using the shell script generate_crt.sh [here](https://github.com/eostis-sarl/wpsolr-generate-self-signed-certificates/tree/e36b46d1f84a224485f94976365c42002903f04e) :
 
     ./generate_crt.sh
 
@@ -27,9 +27,6 @@ or
     cd opensearch_certs
 
 Generate the Root CA : 
-
-    #openssl genrsa -out opensearch-server-1-ca-key.pem 2048
-    #openssl req -new -x509 -sha256 -key opensearch-server-1-ca-key.pem -subj "/C=AU/ST=Some-State/O=Internet Widgits Pty Ltd/CN=opensearch-server-1" -out opensearch-server-1-ca.pem -days 730
 
     openssl genrsa -out opensearch-server-1-ca-key.pem 2048
     openssl req -new -x509 -sha256 -key opensearch-server-1-ca-key.pem -subj "/C=AU/ST=Some-State/O=Internet Widgits Pty Ltd/CN=opensearch-server-1" -out opensearch-server-1-ca.pem -days 730
