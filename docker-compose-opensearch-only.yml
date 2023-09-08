@@ -22,9 +22,11 @@ services:
       - opensearch-server-1-data:/usr/share/opensearch/data
       - opensearch-server-1-config:/usr/share/opensearch/config
       # The self-signed certificates
-      - ./opensearch_certs/opensearch-server-1-ca.pem:/usr/share/opensearch/config/opensearch-server-1-ca.pem
+      - ./opensearch_certs/ca.pem:/usr/share/opensearch/config/ca.pem
       - ./opensearch_certs/opensearch-server-1.pem:/usr/share/opensearch/config/opensearch-server-1.pem
       - ./opensearch_certs/opensearch-server-1-key.pem:/usr/share/opensearch/config/opensearch-server-1-key.pem
+      - ./opensearch_certs/admin.pem:/usr/share/opensearch/config/admin.pem
+      - ./opensearch_certs/admin-key.pem:/usr/share/opensearch/config/admin-key.pem
     ports:
       - 9200:9200 # REST API
       - 9600:9600 # Performance Analyzer

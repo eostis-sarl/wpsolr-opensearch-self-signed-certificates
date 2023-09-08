@@ -1,6 +1,8 @@
 Configure and install Opensearch  with self-signed certificates
 =======
 
+OpenSearch is an open-source search and analytics platform designed for scalability and speed. It is built on a foundation of Elasticsearch and Kibana, two popular tools for search and data visualization. OpenSearch offers powerful search and analytical capabilities, making it suitable for a wide range of use cases, from text-based search engines to log and event data analysis.
+
 We are going to use docker containers to host the different applications.
 To install the docker engine, use the following link : https://docs.docker.com/engine/install/.
 
@@ -17,27 +19,31 @@ If you do intend on using the tls to secure your node, do the following.
 Generating the self-signed certificates (optional)
 -----------
 
-Generate the certificates using the shell script generate_crt.sh [here](https://github.com/eostis-sarl/wpsolr-generate-self-signed-certificates/tree/e36b46d1f84a224485f94976365c42002903f04e) :
+We're going to consider that the Certifacte Authority (CA) has a CN called "CA" and that the CN of the node will be the hostname of the opensearch server (in this case "opensearch-server-1" so for each time its written in this doc, replace it with your own).
 
-    ./generate_crt.sh
+A CA server provides a user-friendly and efficient solution for generating and securely storing asymmetric key pairs. These key pairs are essential for tasks such as encryption, decryption, digital signing, and validation within a Public Key Infrastructure (PKI). The CA server is not something that needs to be active at all times, when it's not generating certs it can be turned off. So the CA CN can be whatever you want.
 
-or
+The Common Name (CN) of the node will be determined by the method your clients use to reach the server. If the client is within another Docker container on the same machine or network, the CN should match the container's name. However, if the client is on a different machine or network, the CN be the hostname of the machine hosting the container.
 
-    mkdir opensearch_certs
-    cd opensearch_certs
+Enter the CNs like this : 
 
-Generate the Root CA : 
+    CA_CN="CA"
+    NODE_CN="opensearch-server-1"
+    ADMIN_CN="admin"
 
-    openssl genrsa -out opensearch-server-1-ca-key.pem 2048
-    openssl req -new -x509 -sha256 -key opensearch-server-1-ca-key.pem -subj "/C=AU/ST=Some-State/O=Internet Widgits Pty Ltd/CN=opensearch-server-1" -out opensearch-server-1-ca.pem -days 730
+So enter the following Distinguished Name (DN) with the following structure:
 
-Generate the node certificate.
+    CA_DN="/C=AU/ST=Some-State/O=Internet Widgits Pty Ltd/CN=CA"
+    NODE_DN="/C=AU/ST=Some-State/O=Internet Widgits Pty Ltd/CN=opensearch-server-1"
+    ADMIN_DN="/C=AU/ST=Some-State/O=Internet Widgits Pty Ltd/CN=admin"
 
-    openssl genrsa -out opensearch-server-1-key-temp.pem 2048
-    openssl pkcs8 -inform PEM -outform PEM -in opensearch-server-1-key-temp.pem -topk8 -nocrypt -v1 PBE-SHA1-3DES -out opensearch-server-1-key.pem
-    openssl req -new -key opensearch-server-1-key.pem -subj "/C=AU/ST=Some-State/O=Internet Widgits Pty Ltd/CN=opensearch-server-1" -out opensearch-server-1.csr
-    echo "subjectAltName=DNS:opensearch-server-1, DNS:localhost" > opensearch-server-1.ext
-    openssl x509 -req -in opensearch-server-1.csr -CA opensearch-server-1-ca.pem -CAkey opensearch-server-1-ca-key.pem -CAcreateserial -sha256 -out opensearch-server-1.pem -days 730 -extfile opensearch-server-1.ext
+If you only need the CN in the DN, you can just write it like this : 
+
+    CA_DN="/CN=CA".
+    NODE_DN="/CN=opensearch-server-1"
+    ADMIN_DN="/CN=admin"
+
+To generate the self signed certificates, use the following link : https://github.com/eostis-sarl/wpsolr-generate-self-signed-certificates.
 
 Start the Opensearch service
 -----------
@@ -61,45 +67,45 @@ If you do not intend on using the tls to secure your node, add in <i>/usr/share/
 <b><u>WARNING!</u> According to the official documentation at https://opensearch.org/docs/latest/security/configuration/disable: Disabling or removing the plugin exposes the configuration index for the Security plugin. If the index contains sensitive information, be sure to protect it through some other means. If you no longer need the index, delete it.</b>
 
 ### Using https with authentification
-Configure the opensearch server by modifying the file on the container at /usr/share/opensearch/config/opensearch.yml: 
+Configure the opensearch server by modifying the file on the container at <i>/usr/share/opensearch/config/opensearch.yml</i>: 
 
     plugins.security.ssl.transport.pemcert_filepath: opensearch-server-1.pem #formerly esnode.pem
     plugins.security.ssl.transport.pemkey_filepath: opensearch-server-1-key.pem #formerly esnode-key.pem
-    plugins.security.ssl.transport.pemtrustedcas_filepath: opensearch-server-1-ca.pem #Using the newly generated one
+    plugins.security.ssl.transport.pemtrustedcas_filepath: ca.pem #Using the newly generated one
     plugins.security.ssl.transport.enforce_hostname_verification: true #formerly false
     plugins.security.ssl.http.enabled: true
     plugins.security.ssl.http.pemcert_filepath: opensearch-server-1.pem #formerly esnode.pem
     plugins.security.ssl.http.pemkey_filepath: opensearch-server-1-key.pem #formerly esnode-key.pem
-    plugins.security.ssl.http.pemtrustedcas_filepath: opensearch-server-1-ca.pem #using the newly generated one    
+    plugins.security.ssl.http.pemtrustedcas_filepath: ca.pem #using the newly generated one    
     plugins.security.allow_unsafe_democertificates: false #formerly true
     plugins.security.allow_default_init_securityindex: true 
         
     plugins.security.authcz.admin_dn:
-      - "CN=opensearch-server-1,O=Internet Widgits Pty Ltd,ST=Some-State,C=AU"
+      - "CN=CA,O=Internet Widgits Pty Ltd,ST=Some-State,C=AU"
+      - "CN=admin,O=Internet Widgits Pty Ltd,ST=Some-State,C=AU"
     plugins.security.nodes_dn:
       - "CN=opensearch-server-1,O=Internet Widgits Pty Ltd,ST=Some-State,C=AU" # for each node add another line
 
-Since plugins.security.allow_unsafe_democertificates has been set to true need to delete the demo certificates esnode.pem, esnode-key.pem in the config directory of opensearch-server-1 docker container to not cause any errors. 
-Restart the container
+Since plugins.security.allow_unsafe_democertificates has been set to true, you need to delete the demo certificates esnode.pem, esnode-key.pem, kirk.pem, kirk-key.pem, root-ca.pem and root-ca.pem in the config directory of opensearch-server-1 docker container to not cause any errors. 
+
+Restart the container.
 
 Apply the opensearch security settings using the following command in the opensearch node docker container : 
 
-    sudo docker exec -it opensearch-server-1 /bin/bash
-    ./plugins/opensearch-security/tools/securityadmin.sh -cd config/opensearch-security -icl   -nhnv   -cacert config/opensearch-server-1-ca.pem   -cert config/opensearch-server-1.pem -key config/opensearch-server-1-key.pem
+    sudo docker exec -it opensearch-server-1 ./plugins/opensearch-security/tools/securityadmin.sh -cd config/opensearch-security -icl   -nhnv   -cacert config/ca.pem   -cert config/admin.pem -key config/admin-key.pem
+
+Restart the container to apply the changes.
 
 Manage Opensearch 
 -----------
 
-You need to change the admin password 
-To do that you need to access the opensearch docker container CLI using the following command :
+You need to change the admin password
 
-    sudo docker exec -it opensearch-server-1 /bin/bash
+Hash the password you want to use for admin using the script /usr/share/opensearch/plugins/opensearch-security/tools/hash.sh :
 
-Once you're in hash the password you want to use for admin using the script /usr/share/opensearch/plugins/opensearch-security/tools/hash.sh :
+    sudo docker exec -it opensearch-server-1 ./plugins/opensearch-security/tools/hash.sh -p new_password
 
-    ./plugins/opensearch-security/tools/hash.sh -p new_password
-
-Copy the hash it returns and paste it in /usr/share/opensearch/config/opensearch-security/internal_users.yml 
+Copy the hash it returns and paste it in <i>/usr/share/opensearch/config/opensearch-security/internal_users.yml</i> :  
 
     admin:
       hash: "new_hash"
@@ -118,7 +124,7 @@ Or from your wordpress machine :
 
     curl -u admin:new_password --cacert /path/to/opensearch-server-1.pem https://opensearch-server-1:9200
 
-#### Get all the users information.
+#### Get all the user's information.
 
     curl -XGET "https://localhost:9200/_plugins/_security/api/internal" --cacert opensearch_certs/opensearch-serverserver-1.pem -u admin:new_password
 
