@@ -25,19 +25,19 @@ A CA server provides a user-friendly and efficient solution for generating and s
 
 The Common Name (CN) of the node will be determined by the method your clients use to reach the server. If the client is within another Docker container on the same machine or network, the CN should match the container's name. However, if the client is on a different machine or network, the CN be the hostname of the machine hosting the container.
 
-Enter the CNs like this : 
+Enter your CNs like this : 
 
     CA_CN="CA"
     NODE_CN="opensearch-server-1"
     ADMIN_CN="admin"
 
-So enter the following Distinguished Name (DN) with the following structure:
+Then enter your Distinguished Names (DN) using the following structure:
 
     CA_DN="/C=AU/ST=Some-State/O=Internet Widgits Pty Ltd/CN=CA"
     NODE_DN="/C=AU/ST=Some-State/O=Internet Widgits Pty Ltd/CN=opensearch-server-1"
     ADMIN_DN="/C=AU/ST=Some-State/O=Internet Widgits Pty Ltd/CN=admin"
 
-If you only need the CN in the DN, you can just write it like this : 
+If you don't have a full DN, you can just write it like this : 
 
     CA_DN="/CN=CA".
     NODE_DN="/CN=opensearch-server-1"
